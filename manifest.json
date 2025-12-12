@@ -1,0 +1,22 @@
+{
+  "short_name": "JJ Reader",
+  "name": "JJ eBook Reader",
+  "start_url": "/reader/",
+  "scope": "/reader/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "description": "Lector de libros EPUB, PDF y TXT",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
