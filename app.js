@@ -1,3 +1,9 @@
+// === Configuración obligatoria para EPUB.js en entornos restringidos ===
+window.EPUBJS_OPTIONS = {
+  worker: false,
+  requestMethod: "xhr"
+};
+
 let currentBook = null;
 let epubRendition = null;
 let isDark = localStorage.getItem('theme') === 'dark';
@@ -8,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderLibrary();
 });
 
-// === IndexedDB ===
+// === IndexedDB (solo para PDF y TXT, no EPUB por tamaño) ===
 let db;
 async function initDB() {
   try {
@@ -18,11 +24,11 @@ async function initDB() {
     });
     await db.open();
   } catch (err) {
-    console.warn('IndexedDB no disponible. Modo lectura limitado.');
+    console.warn('IndexedDB no disponible. Solo lectura temporal.');
   }
 }
 
-// === Renderizado ===
+// === Biblioteca ===
 function renderLibrary() {
   const app = document.getElementById('app');
   app.innerHTML = `
@@ -65,31 +71,66 @@ async function loadBooks() {
   }
 }
 
-// === Subida ===
+// === Subida de archivos ===
 async function handleFileUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
+
   const ext = file.name.split('.').pop().toLowerCase();
   if (!['pdf', 'epub', 'txt'].includes(ext)) {
-    alert('Formato no soportado');
+    alert('Formato no soportado. Usa PDF, EPUB o TXT.');
     return;
   }
-  const arrayBuffer = await file.arrayBuffer();
-  const book = {
-    name: file.name,
-    type: ext,
-    content: arrayBuffer,
-    lastPage: ext === 'epub' ? 'epubcfi(/6/2!)' : 1,
-    dateAdded: new Date().toISOString()
-  };
-  if (db) {
-    const id = await db.books.add(book);
-    book.id = id;
+
+  let book;
+
+  if (ext === 'epub') {
+    // ✅ EPUB: usar Blob con MIME type correcto + URL
+    const blob = new Blob([file], { type: 'application/epub+zip' });
+    const url = URL.createObjectURL(blob);
+    book = {
+      name: file.name,
+      type: 'epub',
+      url: url,
+      lastPage: 'epubcfi(/6/2!)',
+      dateAdded: new Date().toISOString()
+    };
+    // No se guarda en IndexedDB (evita problemas de tamaño)
+    openBook(book);
+  } 
+  else if (ext === 'pdf') {
+    const arrayBuffer = await file.arrayBuffer();
+    book = {
+      name: file.name,
+      type: 'pdf',
+      content: arrayBuffer,
+      lastPage: 1,
+      dateAdded: new Date().toISOString()
+    };
+    if (db) {
+      const id = await db.books.add(book);
+      book.id = id;
+    }
+    openBook(book);
+  } 
+  else if (ext === 'txt') {
+    const text = await file.text();
+    book = {
+      name: file.name,
+      type: 'txt',
+      content: text,
+      lastPage: 1,
+      dateAdded: new Date().toISOString()
+    };
+    if (db) {
+      const id = await db.books.add(book);
+      book.id = id;
+    }
+    openBook(book);
   }
-  openBook(book);
 }
 
-// === Lectura ===
+// === Abrir libro ===
 function openBook(book) {
   currentBook = book;
   const app = document.getElementById('app');
@@ -101,10 +142,15 @@ function openBook(book) {
     </div>
     <div id="content-area" style="min-height:80vh;"></div>
   `;
+
   document.getElementById('back-btn').onclick = () => {
     if (epubRendition) {
       epubRendition.destroy();
       epubRendition = null;
+    }
+    // Liberar blob URL si existe
+    if (book.url && book.url.startsWith('blob:')) {
+      URL.revokeObjectURL(book.url);
     }
     renderLibrary();
   };
@@ -113,28 +159,28 @@ function openBook(book) {
     const blob = new Blob([book.content], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
     document.getElementById('content-area').innerHTML = `<embed src="${url}" type="application/pdf" class="pdf-viewer" />`;
-  } else if (book.type === 'epub') {
-    // ✅ Asegurar que el contenedor tenga altura ANTES de renderizar
+  } 
+  else if (book.type === 'epub') {
+    // ✅ Renderizar EPUB con URL
     document.getElementById('content-area').innerHTML = '<div id="epub-viewer"></div>';
     const viewer = document.getElementById('epub-viewer');
     viewer.style.height = '100%';
     viewer.style.minHeight = '600px';
-    
-    // Esperar un frame para que el DOM se estabilice
+
+    // Pequeño retraso para asegurar renderizado del DOM
     setTimeout(() => {
-      loadEpub(book.content, book.lastPage || 'epubcfi(/6/2!)');
-    }, 50);
-  } else if (book.type === 'txt') {
-    const text = new TextDecoder().decode(book.content);
-    document.getElementById('content-area').innerHTML = `<div class="text-viewer">${text}</div>`;
+      loadEpub(book.url, book.lastPage);
+    }, 100);
+  } 
+  else if (book.type === 'txt') {
+    document.getElementById('content-area').innerHTML = `<div class="text-viewer">${book.content}</div>`;
   }
 }
 
-// === Carga de EPUB ===
-async function loadEpub(arrayBuffer, cfi) {
+// === Cargar EPUB desde URL ===
+async function loadEpub(url, cfi) {
   try {
-    const book = ePub(arrayBuffer);
-    // ✅ Especificar tamaño explícito en renderTo
+    const book = ePub(url);
     epubRendition = book.renderTo('epub-viewer', {
       width: '100%',
       height: '100%',
@@ -157,6 +203,7 @@ async function loadEpub(arrayBuffer, cfi) {
   }
 }
 
+// === Tema ===
 function toggleTheme() {
   isDark = !isDark;
   localStorage.setItem('theme', isDark ? 'dark' : 'light');
