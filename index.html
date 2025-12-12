@@ -6,43 +6,20 @@
   <title>JJ eBook Reader</title>
   <link rel="stylesheet" href="styles.css" />
   <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="icons/icon-192.png" />
   <meta name="theme-color" content="#3b82f6" />
 </head>
 <body>
   <div id="app">
-    <h1>🔍 Diagnóstico - JJ eBook Reader</h1>
-    <p>1. Este mensaje debería verse siempre.</p>
-    <p id="cdn-status">2. Cargando librerías externas...</p>
-    <p id="dom-status">3. DOM listo.</p>
-    <p id="db-status">4. Inicializando base de datos...</p>
-    <p id="render-status">5. Renderizando interfaz...</p>
+    <h1>📚 JJ eBook Reader</h1>
+    <p>Cargando aplicación...</p>
   </div>
 
-  <!-- Carga controlada de librerías -->
-  <script>
-    // Verifica si Dexie y EPUB.js están disponibles
-    window.libsLoaded = false;
-    window.addEventListener('error', (e) => {
-      document.getElementById('cdn-status').innerHTML = 
-        '❌ Error al cargar librerías: ' + (e.error?.message || e.message);
-    });
-  </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/dexie@4.0.11/dist/dexie.umd.min.js"></script>
+  <!-- Librerías locales -->
+  <script src="dexie.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
   
-  <script>
-    // Confirma que las librerías se cargaron
-    if (typeof Dexie !== 'undefined' && typeof ePub !== 'undefined') {
-      document.getElementById('cdn-status').innerHTML = '✅ Librerías cargadas correctamente';
-      window.libsLoaded = true;
-    } else {
-      document.getElementById('cdn-status').innerHTML = '❌ Falta Dexie o EPUB.js: ' + 
-        (typeof Dexie === 'undefined' ? 'Dexie NO' : 'Dexie OK') + ', ' +
-        (typeof ePub === 'undefined' ? 'EPUB.js NO' : 'EPUB.js OK');
-    }
-  </script>
-
+  <!-- Lógica principal -->
   <script src="app.js"></script>
 </body>
 </html>
