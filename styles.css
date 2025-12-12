@@ -6,6 +6,8 @@
   --accent: #3b82f6;
   --card-bg-light: #ffffff;
   --card-bg-dark: #1e293b;
+  --border-light: #cbd5e1;
+  --border-dark: #334155;
 }
 
 body.light {
@@ -22,7 +24,7 @@ body.dark {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 #app {
@@ -32,35 +34,88 @@ body.dark {
   min-height: 100vh;
 }
 
-.hidden { display: none; }
+.hidden {
+  display: none;
+}
 
+/* Botones */
 .btn {
   padding: 10px 16px;
   border: none;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
   background-color: var(--accent);
   color: white;
 }
 
+.btn-outline {
+  background: transparent;
+  border: 2px dashed var(--border-light);
+  color: var(--text-light);
+}
+
+.dark .btn-outline {
+  border-color: var(--border-dark);
+  color: var(--text-dark);
+}
+
+.btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+/* Tarjetas */
 .card {
   background: var(--card-bg-light);
   border-radius: 12px;
   padding: 16px;
   margin: 12px 0;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
 }
 
 .dark .card {
   background: var(--card-bg-dark);
 }
 
+/* Flex y alineación */
+.flex {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* Input de rango */
+input[type='range'] {
+  width: 100%;
+  margin: 8px 0;
+}
+
+/* === Visor EPUB === */
 #epub-viewer {
   width: 100%;
-  min-height: 70vh;
+  height: 80vh; /* imprescindible para EPUB.js */
+  min-height: 600px;
   background: white;
   border-radius: 8px;
+  overflow: auto;
   padding: 16px;
 }
 
@@ -69,12 +124,29 @@ body.dark {
   color: var(--text-dark);
 }
 
+/* Estilos dentro del contenido EPUB */
+#epub-viewer p,
+#epub-viewer h1,
+#epub-viewer h2,
+#epub-viewer h3 {
+  margin: 0.8em 0;
+  line-height: 1.6;
+}
+
+#epub-viewer a {
+  color: var(--accent);
+}
+
+/* === Visor PDF === */
 .pdf-viewer {
   width: 100%;
   height: 80vh;
   border: none;
+  background: white;
+  border-radius: 8px;
 }
 
+/* === Visor TXT === */
 .text-viewer {
   line-height: 1.8;
   text-align: justify;
@@ -83,9 +155,77 @@ body.dark {
   border-radius: 8px;
   margin: 16px 0;
   font-size: 18px;
+  min-height: 600px;
 }
 
 .dark .text-viewer {
   background: var(--card-bg-dark);
   color: var(--text-dark);
+}
+
+/* Controles de navegación (TXT) */
+.nav-controls {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+/* Título de libro (evita desbordamiento) */
+.book-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+/* Panel de ajustes */
+#settings-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 80px;
+  z-index: 1000;
+}
+
+#settings-overlay .card {
+  width: 90%;
+  max-width: 350px;
+  margin: 0 auto;
+}
+
+/* Scroll en móviles */
+body {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Asegura que el contenido no se corte en pantallas pequeñas */
+@media (max-width: 600px) {
+  #epub-viewer,
+  .pdf-viewer,
+  .text-viewer {
+    height: 70vh;
+    min-height: 400px;
+  }
+
+  .book-title {
+    max-width: 120px;
+    font-size: 1rem;
+  }
+
+  .nav-controls {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .nav-controls button {
+    width: 100%;
+  }
 }
